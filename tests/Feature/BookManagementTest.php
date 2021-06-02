@@ -7,7 +7,7 @@ use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class BookReservationTest extends TestCase
+class BookManagementTest extends TestCase
 {
 
 
@@ -17,9 +17,7 @@ class BookReservationTest extends TestCase
 
     public function a_book_can_be_added_to_a_library () {
 
-
-        $this->withoutExceptionHandling();
-
+        //
 
         // if i hit an end point let say books i will store the book details
 
@@ -29,21 +27,18 @@ class BookReservationTest extends TestCase
         ]);
 
 
-        // assert that the response is ok
-
-        $response->assertOk();
+        $book = Book::first();
 
         // assert that the count of books in the database is 1
 
         $this->assertCount(1, Book::all());
+        $response->assertRedirect($book->path());
 
     }
 
     /** @test */
 
     public function a_title_is_required () {
-
-        // $this->withoutExceptionHandling();
 
             // if i hit an end point and the title is not filled
 
@@ -64,9 +59,6 @@ class BookReservationTest extends TestCase
 
     public function an_author_is_required () {
 
-
-        // $this->withoutExceptionHandling();
-
             // if i hit an end point and the author is not filled
 
             $response = $this->post('/books', [
@@ -85,8 +77,6 @@ class BookReservationTest extends TestCase
 
     public function a_book_can_be_updated () {
 
-        $this->withoutExceptionHandling();
-
         $this->post('/books', [
             'title' => 'this is a cool book',
             'author' => 'ashraf sayed'
@@ -100,13 +90,41 @@ class BookReservationTest extends TestCase
 
         // if we hit the patch request we will update the book
 
-        $response = $this->patch("/books/{$book->id}", [
+        $response = $this->patch($book->path(), [
             'title' => 'the new title ',
             'author' => 'new author'
         ]);
 
         $this->assertEquals('the new title', Book::first()->title);
         $this->assertEquals('new author', Book::first()->author);
+
+        $response->assertRedirect($book->fresh()->path());
+
+    }
+
+    /** @test */
+
+    public function a_book_can_be_deleted () {
+
+        //
+
+        $this->post('/books', [
+            'title' => 'this is a cool book',
+            'author' => 'ashraf sayed'
+        ]);
+
+
+        // get the first book
+
+        $book = Book::first();
+
+        $this->assertCount(1, Book::all());
+
+        $response = $this->delete($book->path());
+
+        $this->assertCount(0, Book::all());
+
+        $response->assertRedirect('/books');
 
     }
 
